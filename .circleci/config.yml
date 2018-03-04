@@ -17,7 +17,7 @@ jobs:
           command: |
             if [ "${CIRCLE_BRANCH}" = "master" ]; then
               blogsync pull a-know.hateblo.jp
-              if [ -n "`git status -sb`" ]; then
+              if [ -n "`git status -sb | grep entry`" ]; then
                 BRANCH=blog-update-`date -u "+%Y%m%d"`
                 git config --global user.email ${MY_EMAIL}
                 git config --global user.name ${MY_NAME}
