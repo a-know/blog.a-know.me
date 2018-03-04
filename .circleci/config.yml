@@ -12,6 +12,9 @@ jobs:
       - run: echo -e "a-know.hateblo.jp\":\"\n  username\":\" a-know\n  password\":\" ${HATEBLO_PASSWARD}\ndefault\":\"\n  local_root\":\" /go/src/github.com/a-know/blog.a-know.me\n" | tr -d \" >> ~/.config/blogsync/config.yaml
       - run: go get github.com/motemen/blogsync
       - checkout
+      - add-ssh-keys:
+          fingerprints:
+            - "26:c3:7c:81:84:bf:3c:c7:b6:f3:f8:33:ce:58:5a:db"
       - run:
           name: Blog update check and create PR
           command: |
@@ -45,7 +48,7 @@ workflows:
   nightly:
     triggers:
       - schedule:
-          cron: "0 * * * *"
+          cron: "30 * * * *"
           filters:
             branches:
               only:
