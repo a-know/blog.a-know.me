@@ -1,26 +1,63 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
   build:
+    environment:
+      - GOPATH: /home/circleci/go
     docker:
-      # specify the version
       - image: circleci/golang:1.9
-      
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
-    #### TEMPLATE_NOTE: go expects specific checkout path representing url
-    #### expecting it in the form of
-    ####   /go/src/github.com/circleci/go-tool
-    ####   /go/src/bitbucket.org/circleci/go-tool
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/a-know/blog.a-know.me
     steps:
+      - run: echo 'export PATH=${GOPATH}/bin/:${PATH}' >> $BASH_ENV
+      - run: mkdir -p ~/.config/blogsync
+      - run: echo -e "a-know.hateblo.jp\":\"\n  username\":\" a-know\n  password\":\" ${HATEBLO_PASSWARD}\ndefault\":\"\n  local_root\":\" /go/src/github.com/a-know/blog.a-know.me\n" | tr -d \" >> ~/.config/blogsync/config.yaml
+      - run: go get github.com/motemen/blogsync
       - checkout
+  update_check:
+    environment:
+      - GOPATH: /home/circleci/go
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/a-know/blog.a-know.me
+    steps:
+      - run:
+          name: Blog update check and create PR
+          command: |
+            if [ "${CIRCLE_BRANCH}" = "master" ]; then
+              blogsync pull a-know.hateblo.jp
+              if [ -n "`git status -sb`" ]; then
+                BRANCH=blog-update-`date -u "+%Y%m%d"`
+                git config --global user.email ${MY_EMAIL}
+                git config --global user.name ${MY_NAME}
+                git checkout -b ${BRANCH}
+                git add .
+                git commit -m "Automatic blog update `date -u '+%Y-%m-%d'`"
+                if git push ${CIRCLE_REPOSITORY_URL} ${BRANCH}
+                then
+                  curl \
+                    --header "Accept: application/vnd.github.v3+json" \
+                    --data "{\"title\": \"${BRANCH}\", \"head\": \"${CIRCLE_PROJECT_USERNAME}:${BRANCH}\", \"base\":\"${CIRCLE_BRANCH}\" }" \
+                    https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls?access_token=${GITHUB_ACCESS_TOKEN}
+                fi
+              fi
+            fi
 
-      # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+workflows:
+  version: 2
+  build_and_check:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: /master/
+      - update_check:
+          filters:
+            branches:
+              only: /master/
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 * * * *"
+          filters:
+            branches:
+              only:
+                - master
