@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  update_check:
     environment:
       - GOPATH: /home/circleci/go
     docker:
@@ -12,13 +12,6 @@ jobs:
       - run: echo -e "a-know.hateblo.jp\":\"\n  username\":\" a-know\n  password\":\" ${HATEBLO_PASSWARD}\ndefault\":\"\n  local_root\":\" /go/src/github.com/a-know/blog.a-know.me\n" | tr -d \" >> ~/.config/blogsync/config.yaml
       - run: go get github.com/motemen/blogsync
       - checkout
-  update_check:
-    environment:
-      - GOPATH: /home/circleci/go
-    docker:
-      - image: circleci/golang:1.9
-    working_directory: /go/src/github.com/a-know/blog.a-know.me
-    steps:
       - run:
           name: Blog update check and create PR
           command: |
@@ -45,10 +38,6 @@ workflows:
   version: 2
   build_and_check:
     jobs:
-      - build:
-          filters:
-            branches:
-              only: /master/
       - update_check:
           filters:
             branches:
@@ -62,5 +51,4 @@ workflows:
               only:
                 - master
     jobs:
-      - build
       - update_check
