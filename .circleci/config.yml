@@ -61,3 +61,6 @@ workflows:
             branches:
               only:
                 - master
+    jobs:
+      - build
+      - update_check
