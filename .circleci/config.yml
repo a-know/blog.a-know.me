@@ -22,19 +22,22 @@ jobs:
           command: |
             if [ "${CIRCLE_BRANCH}" = "master" ]; then
               blogsync pull a-know.hateblo.jp
+              git add -N .
               if [ -n "`git status -sb | grep entry`" ]; then
-                BRANCH=blog-update-`date -u "+%Y%m%d"`
-                git config --global user.email ${MY_EMAIL}
-                git config --global user.name ${MY_NAME}
-                git checkout -b ${BRANCH}
-                git add .
-                git commit -m "Automatic blog update `date -u '+%Y-%m-%d'`"
-                if git push ${CIRCLE_REPOSITORY_URL} ${BRANCH}
-                then
-                  curl \
-                    --header "Accept: application/vnd.github.v3+json" \
-                    --data "{\"title\": \"${BRANCH}\", \"head\": \"${CIRCLE_PROJECT_USERNAME}:${BRANCH}\", \"base\":\"${CIRCLE_BRANCH}\" }" \
-                    https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls?access_token=${GITHUB_ACCESS_TOKEN}
+                if [ -z "`git diff | grep Draft`" ]; then
+                  BRANCH=blog-update-`date -u "+%Y%m%d"`
+                  git config --global user.email ${MY_EMAIL}
+                  git config --global user.name ${MY_NAME}
+                  git checkout -b ${BRANCH}
+                  git add .
+                  git commit -m "Automatic blog update `date -u '+%Y-%m-%d'`"
+                  if git push ${CIRCLE_REPOSITORY_URL} ${BRANCH}
+                  then
+                    curl \
+                      --header "Accept: application/vnd.github.v3+json" \
+                      --data "{\"title\": \"${BRANCH}\", \"head\": \"${CIRCLE_PROJECT_USERNAME}:${BRANCH}\", \"base\":\"${CIRCLE_BRANCH}\" }" \
+                      https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls?access_token=${GITHUB_ACCESS_TOKEN}
+                  fi
                 fi
               fi
             fi
