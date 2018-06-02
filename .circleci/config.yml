@@ -10,7 +10,11 @@ jobs:
       - run: echo 'export PATH=${GOPATH}/bin/:${PATH}' >> $BASH_ENV
       - run: mkdir -p ~/.config/blogsync
       - run: echo -e "a-know.hateblo.jp\":\"\n  username\":\" a-know\n  password\":\" ${HATEBLO_PASSWARD}\ndefault\":\"\n  local_root\":\" /go/src/github.com/a-know/blog.a-know.me\n" | tr -d \" >> ~/.config/blogsync/config.yaml
-      - run: go get github.com/motemen/blogsync
+      - run: go get github.com/a-know/blogsync
+      - run: cd $GOPATH/src/github.com/a-know/blogsync
+      - run: git checkout change-modify-detection
+      - run: go install
+      - run: cd /go/src/github.com/a-know/blog.a-know.me
       - checkout
       - add-ssh-keys:
           fingerprints:
